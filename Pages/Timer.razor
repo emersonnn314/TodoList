@@ -1,22 +1,21 @@
 ﻿@page "/timer"
 
 <PageTitle>Countdown Timer</PageTitle>
-
-<div>
+<div class="container">
     <label for="minutes">Enter Time (in minutes):</label>
     <input id="minutes" @bind="inputMinutes" />
+
+    <button class="btn btn-outline-primary" @onclick="() => StartTimer(inputMinutes)">Start Timer</button>
+
+    <p><strong> Time Remaining (in minutes): @remainingTime minutes</strong> </p>
 </div>
-
-<button @onclick="() => StartTimer(inputMinutes)">Start Timer</button>
-
-<h3>Initial Time: @initialTime minutes</h3>
-<p>Time Remaining: @remainingTime minutes</p>
 
 @code {
     private System.Timers.Timer aTimer;
     private int inputMinutes;
     private int initialTime;
     private int remainingTime;
+
 
     private void StartTimer(int initialTimeInMinutes)
     {
