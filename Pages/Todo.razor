@@ -1,0 +1,152 @@
+﻿@page "/todo"
+@inject LocalStorageAccessor LocalStorageAccessor
+
+<PageTitle>Todo</PageTitle>
+
+<h1>Todo-List (Count: @todos.Count(todo => !todo.IsDone))</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Task</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Done</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var todo in todos)
+    {
+        <tr>
+            <td>
+            <input class="form.control" @bind="todo.Title" />
+            </td>
+            <td>
+            <input class="" type="number"  min="1" max="3" @bind="todo.Priority" placeholder="Priority" />
+            </td>
+            <td>            
+             <input class="btn btn-secondary btn-sm" type="button" @onclick="() => todos.Remove(todo)" value="Remove" />
+            </td>
+         </tr>
+    }
+    </tbody>
+</table>
+
+<div class="container">
+    <input class=""  @onkeydown="@Enter"  placeholder="Enter your TODO" @bind="newTodo" />
+    <input class="" type="number" min="1" max="3" @bind="newPriority" placeholder="Priority" />
+
+<button class="btn btn-primary " @onclick="AddTodo">Add todo</button>
+</div>
+
+@* 
+<h3>BrowserStorageDemonstrate</h3>
+<form>
+    <label class="form-label">
+        Key
+        <input class="form-control" type="text" @bind-value="Key" />
+    </label>
+    <label class="form-label">
+        Value
+        <input class="form-control" type="text" @bind-value="Value" />
+    </label>
+    <button class="btn btn-primary" type="button" @onclick="SetValueAsync">Set Value</button>
+</form>
+<div>Stored Value: @StoredValue</div>
+<button class="btn btn-primary" type="button" @onclick="GetValueAsync">Get Value</button>
+<button class="btn btn-primary" type="button" @onclick="RemoveAsync">Remove Value</button>
+<button class="btn btn-primary" type="button" @onclick="ClearAllAsync">Clear All</button>
+
+<h3>Stored Values</h3>
+<ul>
+    @foreach (var keyValue in KeyValuePairs)
+    {
+        <li>@keyValue.Key: @keyValue.Value</li>
+    }
+</ul>
+ *@
+
+@code {
+    private List<TodoItem> todos = new();
+    private string? newTodo;
+    private int newPriority;
+
+    public string Key { get; set; } = "";
+    public string Value { get; set; } = "";
+    public string StoredValue { get; set; } = "";
+    private List<KeyValuePair<string, string>> KeyValuePairs { get; set; } = new();
+
+
+    private void AddTodo() {
+        if (!string.IsNullOrWhiteSpace(newTodo))
+        {
+            newPriority = Math.Clamp(newPriority, 1, 3);
+            todos.Add(new TodoItem { Title = newTodo, Priority = newPriority });
+            newTodo = string.Empty;
+            newPriority = 0;
+        } 
+    }
+    private void RemoveTodo()
+    {
+        todos.RemoveAll(todo => todo.IsDone);
+    }
+
+
+
+    private void Enter(KeyboardEventArgs e){
+        if(e.Key == "Enter"){
+            AddTodo();
+        }
+    }
+    // make a function that checks the status of todo
+    public Boolean CheckStatus(TodoItem todo){
+        if(todo.IsDone == true){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    public async Task SetValueAsync()
+    {
+        await LocalStorageAccessor.SetValueAsync(Key, Value);
+        await RefreshStoredValues();
+
+    }
+
+    public async Task GetValueAsync()
+    {
+        StoredValue = await LocalStorageAccessor.GetValueAsync<string>(Key);
+    }
+
+    public async Task RemoveAsync()
+    {
+        await LocalStorageAccessor.RemoveAsync(Key);
+        await RefreshStoredValues();
+    }
+
+    public async Task ClearAllAsync()
+    {
+        await LocalStorageAccessor.Clear();
+        await RefreshStoredValues();
+    }
+
+    private async Task RefreshStoredValues()
+    {
+        KeyValuePairs.Clear();
+        for (int i = 0; i < 1000; i++) // Assuming the maximum possible number of keys
+        {
+            var key = $"Key{i}";
+            var value = await LocalStorageAccessor.GetValueAsync<string>(key);
+            if (value != null)
+            {
+                KeyValuePairs.Add(new KeyValuePair<string, string>(key, value));
+            }
+            else
+            {
+                break; // Stop iterating if no value found for the key
+            }
+        }
+    }
+}
+

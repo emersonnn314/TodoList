@@ -1,0 +1,50 @@
+﻿@page "/timer"
+
+<PageTitle>Countdown Timer</PageTitle>
+
+<div>
+    <label for="minutes">Enter Time (in minutes):</label>
+    <input id="minutes" @bind="inputMinutes" />
+</div>
+
+<button @onclick="() => StartTimer(inputMinutes)">Start Timer</button>
+
+<h3>Initial Time: @initialTime minutes</h3>
+<p>Time Remaining: @remainingTime minutes</p>
+
+@code {
+    private System.Timers.Timer aTimer;
+    private int inputMinutes;
+    private int initialTime;
+    private int remainingTime;
+
+    private void StartTimer(int initialTimeInMinutes)
+    {
+        inputMinutes = initialTimeInMinutes;
+        initialTime = inputMinutes;
+        remainingTime = inputMinutes;
+
+        // Convert minutes to milliseconds
+        int interval = initialTimeInMinutes * 60 * 1000;
+
+        aTimer = new System.Timers.Timer(interval);
+        aTimer.Elapsed += CountDownTimer;
+        aTimer.Enabled = true;
+    }
+
+    private void CountDownTimer(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (remainingTime > 0)
+        {
+            remainingTime--;
+            StateHasChanged(); // Trigger a re-render
+        }
+        else
+        {
+            aTimer.Enabled = false;
+            // Optionally perform any actions when the timer reaches zero
+        }
+    }
+
+}
+
