@@ -1,5 +1,4 @@
 ﻿@page "/todo"
-@inject LocalStorageAccessor LocalStorageAccessor
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <PageTitle>Todo</PageTitle>
@@ -42,9 +41,6 @@
     private List<TodoItem> todos = new();
     private string? newTodo;
     private int newPriority;
-    // const string noteKey = "todoitem";
-    // private bool isDone;
-    // private string taskName;
 
     protected override async Task OnInitializedAsync()
     {
