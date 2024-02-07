@@ -10,6 +10,14 @@
     <p><strong> Time Remaining (in minutes): @remainingTime minutes</strong> </p>
 </div>
 
+@if (isTimerActive)
+{
+    <img src="images/clock.jpeg" asp-append-version="true" alt="Timer" />
+} else
+{
+    <p class="ms-2"><strong>Timer is not active</strong></p>
+}
+
 @code {
     private System.Timers.Timer aTimer;
     private int inputMinutes;
@@ -17,6 +25,9 @@
     private int remainingTime;
 
 
+
+private bool isTimerActive => aTimer != null && aTimer.Enabled; 
+    
     private void StartTimer(int initialTimeInMinutes)
     {
         inputMinutes = initialTimeInMinutes;

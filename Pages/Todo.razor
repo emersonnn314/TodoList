@@ -1,5 +1,6 @@
 ﻿@page "/todo"
 @inject LocalStorageAccessor LocalStorageAccessor
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <PageTitle>Todo</PageTitle>
 
@@ -24,7 +25,7 @@
             <input class="" type="number"  min="1" max="3" @bind="todo.Priority" placeholder="Priority" />
             </td>
             <td>            
-             <input class="btn btn-secondary btn-sm" type="button" @onclick="() => todos.Remove(todo)" value="Remove" />
+             <input class="btn btn-secondary btn-sm" type="button" @onclick="() => RemoveTodo(todo)" value="Remove" />
             </td>
          </tr>
     }
@@ -32,73 +33,73 @@
 </table>
 
 <div class="container">
-    <input class=""  @onkeydown="@Enter"  placeholder="Task" @bind="newTodo" />
-    <input class="" type="number" min="1" max="3" @bind="newPriority" placeholder="Priority" />
-
-<button class="btn btn-primary " @onclick="AddTodo">Add todo</button>
+    <input class="form-control-sm col-3"  @onkeydown="Enter"  placeholder="Task" @bind="newTodo" />
+    <input class="form-control-sm col-1" type="number" min="1" max="3" @bind="newPriority" placeholder="Priority" />
+    <button class="btn btn-primary col-1" @onclick="AddTodo">Add todo</button>
 </div>
 
-@* 
-<h3>BrowserStorageDemonstrate</h3>
-<form>
-    <label class="form-label">
-        Key
-        <input class="form-control" type="text" @bind-value="Key" />
-    </label>
-    <label class="form-label">
-        Value
-        <input class="form-control" type="text" @bind-value="Value" />
-    </label>
-    <button class="btn btn-primary" type="button" @onclick="SetValueAsync">Set Value</button>
-</form>
-<div>Stored Value: @StoredValue</div>
-<button class="btn btn-primary" type="button" @onclick="GetValueAsync">Get Value</button>
-<button class="btn btn-primary" type="button" @onclick="RemoveAsync">Remove Value</button>
-<button class="btn btn-primary" type="button" @onclick="ClearAllAsync">Clear All</button>
-
-<h3>Stored Values</h3>
-<ul>
-    @foreach (var keyValue in KeyValuePairs)
-    {
-        <li>@keyValue.Key: @keyValue.Value</li>
-    }
-</ul>
- *@
-<div class="container mt-5">
- <Timer />
- </div>
 @code {
     private List<TodoItem> todos = new();
     private string? newTodo;
     private int newPriority;
+    // const string noteKey = "todoitem";
+    // private bool isDone;
+    // private string taskName;
 
-    public string Key { get; set; } = "";
-    public string Value { get; set; } = "";
-    public string StoredValue { get; set; } = "";
-    private List<KeyValuePair<string, string>> KeyValuePairs { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch tasks from local storage
+        todos = await localStorage.GetItemAsync<List<TodoItem>>("todos");
+        if (todos == null)
+        {
+            todos = new List<TodoItem>();
+        }
+      }
+    private async Task LoadTodosFromLocalStorage()
+    {
+        todos = await localStorage.GetItemAsync<List<TodoItem>>("todos") ?? new List<TodoItem>();
+    }
 
-
-    private void AddTodo() {
+    private async Task AddTodo()
+    {
         if (!string.IsNullOrWhiteSpace(newTodo))
         {
             newPriority = Math.Clamp(newPriority, 1, 3);
-            todos.Add(new TodoItem { Title = newTodo, Priority = newPriority });
+            var todo = new TodoItem { Title = newTodo, Priority = newPriority };
+            todos.Add(todo);
+            await localStorage.SetItemAsync(todo.Id.ToString(), todos);
             newTodo = string.Empty;
             newPriority = 0;
-        } 
+        }
     }
-    private void RemoveTodo()
+    private async Task RemoveTodo(TodoItem todo)
     {
-        todos.RemoveAll(todo => todo.IsDone);
+        todos.Remove(todo); // Remove from the list in memory
+        await localStorage.SetItemAsync("todos", todos); // Update the list in local storage
+
+        // Remove the todo item itself from local storage using its unique identifier key
+        await localStorage.RemoveItemAsync(todo.Id.ToString());
     }
 
-
-
-    private void Enter(KeyboardEventArgs e){
-        if(e.Key == "Enter"){
+    private void Enter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
             AddTodo();
         }
     }
+    // private void RemoveTodo()
+    // {
+    //     todos.RemoveAll(todo => todo.IsDone);
+    // }
+
+
+
+    // private void Enter(KeyboardEventArgs e){
+    //     if(e.Key == "Enter"){
+    //         AddTodo();
+    //     }
+    // }
     // make a function that checks the status of todo
     public Boolean CheckStatus(TodoItem todo){
         if(todo.IsDone == true){
@@ -109,46 +110,5 @@
         }
     }
 
-    public async Task SetValueAsync()
-    {
-        await LocalStorageAccessor.SetValueAsync(Key, Value);
-        await RefreshStoredValues();
-
-    }
-
-    public async Task GetValueAsync()
-    {
-        StoredValue = await LocalStorageAccessor.GetValueAsync<string>(Key);
-    }
-
-    public async Task RemoveAsync()
-    {
-        await LocalStorageAccessor.RemoveAsync(Key);
-        await RefreshStoredValues();
-    }
-
-    public async Task ClearAllAsync()
-    {
-        await LocalStorageAccessor.Clear();
-        await RefreshStoredValues();
-    }
-
-    private async Task RefreshStoredValues()
-    {
-        KeyValuePairs.Clear();
-        for (int i = 0; i < 1000; i++) // Assuming the maximum possible number of keys
-        {
-            var key = $"Key{i}";
-            var value = await LocalStorageAccessor.GetValueAsync<string>(key);
-            if (value != null)
-            {
-                KeyValuePairs.Add(new KeyValuePair<string, string>(key, value));
-            }
-            else
-            {
-                break; // Stop iterating if no value found for the key
-            }
-        }
-    }
 }
 
